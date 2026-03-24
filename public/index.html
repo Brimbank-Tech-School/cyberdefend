@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CyberDefend</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════ LOBBY VIEW ═══════════════════════════ -->
+<div id="lobby-view" class="view active">
+  <div class="lobby-bg-grid"></div>
+  <div class="lobby-container">
+    <div class="lobby-header">
+      <h1 class="game-title">CYBER<span class="title-accent">DEFEND</span></h1>
+      <p class="game-subtitle">Hacker vs Cyber Controller · School Challenge Game</p>
+    </div>
+
+    <!-- Name Input -->
+    <div id="name-section" class="lobby-card">
+      <h2>Enter Your Name</h2>
+      <div class="name-input-row">
+        <input type="text" id="player-name-input" placeholder="Your name..." maxlength="20" autocomplete="off" />
+      </div>
+
+      <!-- Mode tabs -->
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tab-pvp" onclick="switchTab('pvp')">⚔️ VS PLAYER</button>
+        <button class="mode-tab" id="tab-practice" onclick="switchTab('practice')">🤖 PRACTICE VS CPU</button>
+      </div>
+
+      <!-- PvP section -->
+      <div id="pvp-section">
+        <button id="join-btn" class="btn btn-primary" style="width:100%">JOIN LOBBY</button>
+      </div>
+
+      <!-- Practice section -->
+      <div id="practice-section" class="hidden">
+        <div class="practice-options">
+          <div>
+            <div class="practice-label">CHOOSE YOUR ROLE</div>
+            <div class="role-mini-cards">
+              <button class="role-mini-card hacker-mini active" id="practice-hacker" onclick="setPracticeRole('hacker')">
+                💀 Hacker
+              </button>
+              <button class="role-mini-card controller-mini" id="practice-controller" onclick="setPracticeRole('controller')">
+                🛡️ Controller
+              </button>
+            </div>
+          </div>
+          <div>
+            <div class="practice-label">DIFFICULTY</div>
+            <div class="difficulty-cards">
+              <button class="difficulty-card active" id="diff-easy" onclick="setDifficulty('easy')">
+                <span>🟢</span><span>Easy</span>
+              </button>
+              <button class="difficulty-card" id="diff-medium" onclick="setDifficulty('medium')">
+                <span>🟡</span><span>Medium</span>
+              </button>
+              <button class="difficulty-card" id="diff-hard" onclick="setDifficulty('hard')">
+                <span>🔴</span><span>Hard</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <button id="practice-btn" class="btn btn-practice" onclick="startPractice()">▶ START PRACTICE</button>
+      </div>
+
+      <p id="lobby-error" class="error-msg hidden"></p>
+    </div>
+
+    <!-- Lobby Players -->
+    <div id="lobby-players-section" class="lobby-card hidden">
+      <h2>LOBBY</h2>
+      <div class="player-slots">
+        <div class="player-slot" id="slot-0">
+          <span class="slot-icon">👤</span>
+          <span class="slot-name">Waiting...</span>
+          <span class="slot-role"></span>
+        </div>
+        <div class="vs-divider">VS</div>
+        <div class="player-slot" id="slot-1">
+          <span class="slot-icon">👤</span>
+          <span class="slot-name">Waiting...</span>
+          <span class="slot-role"></span>
+        </div>
+      </div>
+
+      <!-- Role Selection -->
+      <div id="role-section" class="role-selection hidden">
+        <h3>Choose Your Role</h3>
+        <div class="role-cards">
+          <div class="role-card hacker-card" id="hacker-card" onclick="selectRole('hacker')">
+            <div class="role-icon">💀</div>
+            <div class="role-name">HACKER</div>
+            <div class="role-desc">Infiltrate rooms and execute cyber attacks. Turn rooms <span style="color:#ff2244">RED</span>.</div>
+            <div class="role-badge" id="hacker-badge"></div>
+          </div>
+          <div class="role-card controller-card" id="controller-card" onclick="selectRole('controller')">
+            <div class="role-icon">🛡️</div>
+            <div class="role-name">CYBER CONTROLLER</div>
+            <div class="role-desc">Defend the school network. Fix each room and turn them <span style="color:#00ff88">GREEN</span>.</div>
+            <div class="role-badge" id="controller-badge"></div>
+          </div>
+        </div>
+        <button id="ready-btn" class="btn btn-ready hidden" onclick="setReady()">✓ READY</button>
+        <p id="ready-msg" class="ready-msg"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ GAME VIEW ════════════════════════════ -->
+<div id="game-view" class="view">
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-left">
+      <div class="score-block hacker-score">
+        <span class="score-icon">💀</span>
+        <span id="hacker-name-hud">Hacker</span>
+        <span class="score-count" id="hacker-score">0</span>
+        <span class="score-label">rooms</span>
+      </div>
+    </div>
+    <div class="hud-center">
+      <div id="timer-display" class="timer">10:00</div>
+      <div class="timer-label">REMAINING</div>
+    </div>
+    <div class="hud-right">
+      <div class="score-block controller-score">
+        <span class="score-icon">🛡️</span>
+        <span id="controller-name-hud">Controller</span>
+        <span class="score-count" id="controller-score">0</span>
+        <span class="score-label">rooms</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Activity Feed (practice mode only) -->
+  <div id="ai-feed" class="hidden"></div>
+
+  <!-- Role Banner -->
+  <div id="role-banner">
+    <span id="role-banner-icon"></span>
+    <span id="role-banner-text"></span>
+  </div>
+
+  <!-- Map + Room Panel -->
+  <div id="game-body">
+    <div id="map-container">
+      <div id="room-grid"></div>
+      <div id="explorer-wrap" class="hidden">
+        <canvas id="explorer-canvas" width="900" height="540"></canvas>
+      </div>
+    </div>
+
+    <!-- Side Panel: Room Info / Challenge -->
+    <div id="side-panel" class="side-panel">
+      <div id="panel-idle">
+        <div class="panel-icon">🗺️</div>
+        <h3>Select a Room</h3>
+        <p>Click any room on the map to enter it and start a cyber challenge.</p>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot neutral"></span> Neutral</div>
+          <div class="legend-item"><span class="legend-dot red"></span> Hacked (RED)</div>
+          <div class="legend-item"><span class="legend-dot green"></span> Secured (GREEN)</div>
+        </div>
+      </div>
+
+      <div id="panel-room" class="hidden">
+        <div id="room-panel-header">
+          <span id="room-panel-icon"></span>
+          <div>
+            <h3 id="room-panel-name"></h3>
+            <p id="room-panel-challenge-label" class="challenge-label"></p>
+          </div>
+        </div>
+        <div id="room-panel-status-bar"></div>
+        <div id="challenge-area"></div>
+        <button id="leave-room-btn" class="btn btn-secondary" onclick="leaveRoom()">← Leave Room</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ GAME OVER OVERLAY ════════════════════ -->
+<div id="game-over-overlay" class="overlay hidden">
+  <div class="overlay-card">
+    <div id="gameover-icon" class="gameover-icon"></div>
+    <h1 id="gameover-title"></h1>
+    <p id="gameover-subtitle"></p>
+    <div class="gameover-scores">
+      <div class="gs-block hacker">
+        <div class="gs-icon">💀</div>
+        <div id="go-hacker-name"></div>
+        <div id="go-hacker-score" class="gs-count"></div>
+        <div>rooms hacked</div>
+      </div>
+      <div class="gs-block controller">
+        <div class="gs-icon">🛡️</div>
+        <div id="go-controller-name"></div>
+        <div id="go-controller-score" class="gs-count"></div>
+        <div>rooms secured</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="location.reload()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ DISCONNECT OVERLAY ═══════════════════ -->
+<div id="disconnect-overlay" class="overlay hidden">
+  <div class="overlay-card">
+    <div class="gameover-icon">⚡</div>
+    <h1>Connection Lost</h1>
+    <p id="disconnect-msg">Your opponent has disconnected.</p>
+    <button class="btn btn-primary" onclick="location.reload()">RETURN TO LOBBY</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/challenges.js"></script>
+<script src="js/explorer.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
