@@ -349,11 +349,15 @@ function openExplorer(roomId) {
   const canvas = $('explorer-canvas');
   canvas.width = 900; canvas.height = 540;
   canvas.style.width = ''; canvas.style.height = '';
-  // Size canvas to fit available space after layout settles
-  requestAnimationFrame(() => {
-    const wrap = $('explorer-wrap');
-    const W = Math.max(1, wrap.clientWidth - 4);
-    const H = Math.max(1, wrap.clientHeight - 4);
+  // Use window dimensions — wrap.clientHeight unreliable with flex height:100%
+  function sizeExplorerCanvas() {
+    const aiFeedEl = $('ai-feed');
+    const aiFeedH  = (aiFeedEl && !aiFeedEl.classList.contains('hidden')) ? (aiFeedEl.offsetHeight || 30) : 0;
+    const hudH     = $('hud')         ? $('hud').offsetHeight         : 64;
+    const bannerH  = $('role-banner') ? $('role-banner').offsetHeight : 40;
+    const panelH   = 280;
+    const W = Math.max(200, window.innerWidth  - 8);
+    const H = Math.max(100, window.innerHeight - hudH - bannerH - aiFeedH - panelH - 12);
     const ratio = 900 / 540;
     if (W / H > ratio) {
       canvas.style.height = H + 'px';
@@ -362,7 +366,11 @@ function openExplorer(roomId) {
       canvas.style.width  = W + 'px';
       canvas.style.height = Math.floor(W / ratio) + 'px';
     }
-  });
+  }
+  requestAnimationFrame(() => requestAnimationFrame(sizeExplorerCanvas));
+  if (window._explorerResizer) window.removeEventListener('resize', window._explorerResizer);
+  window._explorerResizer = sizeExplorerCanvas;
+  window.addEventListener('resize', sizeExplorerCanvas);
   if (window._roomExplorer) { window._roomExplorer.destroy(); window._roomExplorer = null; }
   window._roomExplorer = new RoomExplorer({
     canvas, roomId, role: client.myRole,
@@ -379,6 +387,7 @@ function openExplorer(roomId) {
 }
 
 function closeExplorer() {
+  if (window._explorerResizer) { window.removeEventListener('resize', window._explorerResizer); window._explorerResizer = null; }
   if (window._roomExplorer) { window._roomExplorer.destroy(); window._roomExplorer = null; }
   hideEl('explorer-wrap');
   $('game-body').classList.remove('explorer-mode');

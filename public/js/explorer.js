@@ -697,8 +697,8 @@ const ROOM_DEFS = {
   workshop: {
     theme:{ floor:'#B8B8A8', wall:'#4a4a3a', trim:'#3a3a2a', tileW:56 },
     objects:[
-      {id:'wb1',type:'workbench',x:340,y:200,w:200,h:52,name:'Main Workbench',flavor:'A heavy workbench covered in sawdust and metal shavings.'},
-      {id:'wb2',type:'workbench',x:340,y:385,w:200,h:52,name:'Electronics Bench',flavor:'A soldering station and half-built circuit boards.'},
+      {id:'wb1',type:'workbench',x:340,y:200,w:200,h:52,name:'Main Workbench',flavor:'A heavy workbench covered in sawdust and metal shavings.',passable:true},
+      {id:'wb2',type:'workbench',x:340,y:385,w:200,h:52,name:'Electronics Bench',flavor:'A soldering station and half-built circuit boards.',passable:true},
       {id:'tc',type:'cabinet',x:100,y:280,w:52,h:80,col:'#5a4a3a',name:'Tool Cabinet',flavor:'A red metal tool cabinet. All tools present — mostly.'},
       {id:'pd',type:'desk',x:720,y:240,w:90,h:56,col:'#2a2a3a',name:'3D Print Station',flavor:'The 3D print station desk. A part is mid-print.'},
       {id:'p3',type:'printer3d',x:760,y:250,name:'3D Printer',flavor:'A FDM 3D printer whirring away on a complex object.'},
