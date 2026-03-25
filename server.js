@@ -127,6 +127,28 @@ function generatePhishingChallenge() {
         { id: 'e4', label: 'Contact IT Support link', isMalicious: false },
       ],
     },
+    {
+      from: 'noreply@sch00l-rewards.com',
+      subject: 'You have earned a £50 Amazon voucher!',
+      body: 'As a top student you have been selected for a reward. Log in with your school account to claim your voucher before it expires tonight.',
+      elements: [
+        { id: 'e1', label: 'Sender domain (sch00l-rewards.com)', isMalicious: true },
+        { id: 'e2', label: 'Claim Voucher link', isMalicious: true },
+        { id: 'e3', label: 'Attachment: voucher_claim.exe', isMalicious: true },
+        { id: 'e4', label: 'Unsubscribe link', isMalicious: false },
+      ],
+    },
+    {
+      from: 'it-helpdesk@schoolit-support.net',
+      subject: 'Action required: Malware detected on your device',
+      body: 'Our systems have detected suspicious activity on your school device. Please install the security patch attached immediately to protect your data.',
+      elements: [
+        { id: 'e1', label: 'Sender address (schoolit-support.net)', isMalicious: true },
+        { id: 'e2', label: 'Attachment: SecurityPatch.exe', isMalicious: true },
+        { id: 'e3', label: 'Download patch link', isMalicious: true },
+        { id: 'e4', label: 'Official IT contact number', isMalicious: false },
+      ],
+    },
   ];
   const t = templates[Math.floor(Math.random() * templates.length)];
   const malicious = t.elements.filter(e => e.isMalicious).map(e => e.id);
@@ -203,17 +225,23 @@ function generateMalwareChallenge() {
 }
 
 function generateNetworkChallenge() {
-  const normalIPs = Array.from({ length: 7 }, (_, i) => {
+  const scenarios = [
+    { label: 'requests', threshold: 300 },
+    { label: 'failed_logins', threshold: 50 },
+    { label: 'data_sent_mb', threshold: 200 },
+  ];
+  const sc = scenarios[Math.floor(Math.random() * scenarios.length)];
+  const normalIPs = Array.from({ length: 7 }, () => {
     const a = Math.floor(Math.random() * 200) + 10;
     const b = Math.floor(Math.random() * 255);
     const c = Math.floor(Math.random() * 255);
     const d = Math.floor(Math.random() * 255);
-    return { ip: `${a}.${b}.${c}.${d}`, requests: Math.floor(Math.random() * 20) + 5 };
+    return { ip: `${a}.${b}.${c}.${d}`, requests: Math.floor(Math.random() * 20) + 2 };
   });
   const attackerIP = `${Math.floor(Math.random() * 200) + 10}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
-  const attackerEntry = { ip: attackerIP, requests: Math.floor(Math.random() * 200) + 300 };
+  const attackerEntry = { ip: attackerIP, requests: Math.floor(Math.random() * 200) + sc.threshold };
   const logs = shuffle([...normalIPs, attackerEntry]);
-  return { logs, attackerIP };
+  return { logs, attackerIP, scenarioLabel: sc.label };
 }
 
 function generateSocialChallenge() {
@@ -256,6 +284,36 @@ function generateSocialChallenge() {
         { id: 'b', text: 'Forward the email to the IT department as suspicious', hackerWin: false, controllerWin: true },
         { id: 'c', text: 'Delete the email without clicking', hackerWin: false, controllerWin: false },
         { id: 'd', text: 'Check with the school office if the vouchers are real', hackerWin: false, controllerWin: true },
+      ],
+    },
+    {
+      scenario: 'Someone tailgates through a secure door behind a member of staff, claiming they forgot their access card.',
+      avatar: '🚪',
+      options: [
+        { id: 'a', text: 'Hold the door — they look like staff', hackerWin: true, controllerWin: false },
+        { id: 'b', text: 'Ask them to use the intercom to verify identity', hackerWin: false, controllerWin: true },
+        { id: 'c', text: 'Ignore it — not your problem', hackerWin: false, controllerWin: false },
+        { id: 'd', text: 'Report the incident to the front office', hackerWin: false, controllerWin: true },
+      ],
+    },
+    {
+      scenario: 'A "student" you don\'t recognise asks to borrow your logged-in laptop for "just two minutes" to print something.',
+      avatar: '💻',
+      options: [
+        { id: 'a', text: 'Hand it over — it\'ll only take a moment', hackerWin: true, controllerWin: false },
+        { id: 'b', text: 'Log out first, then let them use the guest account', hackerWin: false, controllerWin: true },
+        { id: 'c', text: 'Walk away with your laptop', hackerWin: false, controllerWin: false },
+        { id: 'd', text: 'Offer to print it for them while watching', hackerWin: false, controllerWin: true },
+      ],
+    },
+    {
+      scenario: 'A pop-up appears on the school computer saying "Your device is infected! Call this number immediately!"',
+      avatar: '⚠️',
+      options: [
+        { id: 'a', text: 'Call the number straight away', hackerWin: true, controllerWin: false },
+        { id: 'b', text: 'Close the browser and report it to IT', hackerWin: false, controllerWin: true },
+        { id: 'c', text: 'Click the pop-up to find out more', hackerWin: true, controllerWin: false },
+        { id: 'd', text: 'Take a photo and show your teacher', hackerWin: false, controllerWin: true },
       ],
     },
   ];
@@ -584,6 +642,7 @@ function endGame() {
     controllerName: gameState.players.controller.name,
   });
   gameState = null;
+  lobby = { players: {}, phase: 'waiting' };
 }
 
 // ─── Lobby State ──────────────────────────────────────────────────────────────

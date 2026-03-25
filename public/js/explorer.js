@@ -6,6 +6,7 @@
 
 const EW = 900, EH = 540, EWALL = 72, ESPEED = 220;
 const EINTERACT = 74, ECW = 22, ECH = 30;
+const ECOL = 10; // collision radius — smaller than drawn character for easier navigation
 const EDEPTH = 6;
 
 // ── Colour helpers ───────────────────────────────────────────
@@ -541,8 +542,8 @@ const ROOM_DEFS = {
       {id:'bs2',type:'shelf',x:100,y:330,w:44,h:130,name:'Non-Fiction Shelf',flavor:'Encyclopaedias, atlases, a battered Python textbook.'},
       {id:'bs3',type:'shelf',x:240,y:108,w:160,h:44,name:'Reference Shelf',flavor:'"Network Security for Beginners" has been checked out.'},
       {id:'rt',type:'desk',x:510,y:310,w:130,h:70,col:'#A0784E',name:'Reading Table',flavor:'Two open books and a half-finished crossword puzzle.'},
-      {id:'ch1',type:'desk',x:420,y:390,w:34,h:34,col:'#7a5a30',name:'Reading Chair',flavor:'A well-worn armchair. Very comfortable looking.'},
-      {id:'ch2',type:'desk',x:600,y:390,w:34,h:34,col:'#7a5a30',name:'Reading Chair',flavor:'Someone left a bookmark in this chair. Page 247.'},
+      {id:'ch1',type:'desk',x:420,y:390,w:34,h:34,col:'#7a5a30',name:'Reading Chair',flavor:'A well-worn armchair. Very comfortable looking.',passable:true},
+      {id:'ch2',type:'desk',x:600,y:390,w:34,h:34,col:'#7a5a30',name:'Reading Chair',flavor:'Someone left a bookmark in this chair. Page 247.',passable:true},
       {id:'gl',type:'desk',x:700,y:415,w:40,h:40,col:'#4a8a5a',name:'Globe',flavor:'A dusty globe. Someone has drawn a small star on Great Britain.'},
       {id:'ld',type:'desk',x:720,y:150,w:100,h:58,col:'#8B6914',name:"Librarian\'s Desk",flavor:'A stack of returned books waiting to be re-shelved.'},
       {id:'lc',type:'computer',x:720,y:140,w:52,h:38,name:'Library Terminal',isChallenge:true},
@@ -567,8 +568,8 @@ const ROOM_DEFS = {
       {id:'ea1',type:'easel',x:210,y:210,name:'Easel A',flavor:'A half-finished watercolour landscape. Actually quite good.'},
       {id:'ea2',type:'easel',x:385,y:200,name:'Easel B',flavor:'An abstract piece in bold primary colours. Interpretation unclear.'},
       {id:'ea3',type:'easel',x:555,y:210,name:'Easel C',flavor:"A portrait of a teacher. It's not very flattering."},
-      {id:'pw',type:'pottery',x:200,y:390,name:'Pottery Wheel',flavor:'A lopsided clay bowl drying on the wheel.'},
-      {id:'ab',type:'workbench',x:520,y:405,w:160,h:50,name:'Art Bench',flavor:'Covered in dried paint, brushes, and a palette of mixed colours.'},
+      {id:'pw',type:'pottery',x:200,y:390,name:'Pottery Wheel',flavor:'A lopsided clay bowl drying on the wheel.',passable:true},
+      {id:'ab',type:'workbench',x:520,y:405,w:160,h:50,name:'Art Bench',flavor:'Covered in dried paint, brushes, and a palette of mixed colours.',passable:true},
       {id:'sc',type:'cabinet',x:840,y:200,w:50,h:70,col:'#8B5E3C',name:'Supply Cabinet',flavor:'Paints, brushes, clay, pastels. Very disorganised.'},
       {id:'si',type:'sink',x:840,y:365,name:'Art Sink',flavor:'The sink is stained with every colour of the rainbow.'},
       {id:'ac',type:'computer',x:760,y:130,w:52,h:38,name:'Art Department Computer',isChallenge:true},
@@ -593,9 +594,9 @@ const ROOM_DEFS = {
       {id:'st',type:'stage',x:320,y:185,w:240,h:90,name:'Stage',flavor:"A raised wooden stage. The boards creak when you walk on it."},
       {id:'cr',type:'costume_rail',x:790,y:215,w:110,name:'Costume Rail',flavor:'Costumes for the upcoming school production of "Grease".'},
       {id:'pc',type:'cabinet',x:840,y:395,w:52,h:64,col:'#4a2a0a',name:'Props Cabinet',flavor:'Stage props — a rubber sword, a fake skull, a stack of hats.'},
-      {id:'ch1',type:'desk',x:500,y:425,w:32,h:32,col:'#5a3a1a',name:'Audience Chair',flavor:'A plastic chair from the audience area.'},
-      {id:'ch2',type:'desk',x:580,y:425,w:32,h:32,col:'#5a3a1a',name:'Audience Chair',flavor:"There's some chewing gum stuck underneath this one."},
-      {id:'ch3',type:'desk',x:660,y:425,w:32,h:32,col:'#5a3a1a',name:'Audience Chair',flavor:'A coat draped over it and a water bottle on the floor beside it.'},
+      {id:'ch1',type:'desk',x:500,y:425,w:32,h:32,col:'#5a3a1a',name:'Audience Chair',flavor:'A plastic chair from the audience area.',passable:true},
+      {id:'ch2',type:'desk',x:580,y:425,w:32,h:32,col:'#5a3a1a',name:'Audience Chair',flavor:"There's some chewing gum stuck underneath this one.",passable:true},
+      {id:'ch3',type:'desk',x:660,y:425,w:32,h:32,col:'#5a3a1a',name:'Audience Chair',flavor:'A coat draped over it and a water bottle on the floor beside it.',passable:true},
       {id:'mi',type:'cabinet',x:100,y:190,w:42,h:80,col:'#2a2a2a',name:'Full-Length Mirror',flavor:'A large mirror. You can see yourself — and the whole room behind you.'},
       {id:'ic',type:'intercom',x:840,y:335,name:'Wall Intercom',isChallenge:true},
     ]
@@ -612,7 +613,7 @@ const ROOM_DEFS = {
     objects:[
       {id:'bh',type:'desk',x:450,y:96,w:80,h:44,col:'#ff8800',name:'Basketball Hoop',flavor:'A basketball hoop high on the wall. The net is frayed.'},
       {id:'er',type:'cabinet',x:100,y:260,w:54,h:160,col:'#4a5a6a',name:'Equipment Rack',flavor:'Sports equipment — bibs, cones, a deflated football.'},
-      {id:'bn',type:'desk',x:450,y:455,w:300,h:36,col:'#8B7355',name:'Spectator Bench',flavor:'Wooden benches along the wall for spectators.'},
+      {id:'bn',type:'desk',x:450,y:455,w:300,h:36,col:'#8B7355',name:'Spectator Bench',flavor:'Wooden benches along the wall for spectators.',passable:true},
       {id:'fa',type:'cabinet',x:840,y:155,w:52,h:64,col:'#cc2222',name:'First Aid Station',flavor:'A first aid cabinet. Fully stocked. Nothing suspicious here.'},
       {id:'sb',type:'desk',x:840,y:315,w:60,h:44,col:'#2a2a3a',name:'Scoreboard',flavor:'Electronic scoreboard. HOME: 3 — AWAY: 3.'},
       {id:'et',type:'workbench',x:190,y:148,w:120,h:48,col:'#5a6a4a',name:'Equipment Table',flavor:'A table used by the PE teacher for setting up activities.'},
@@ -625,7 +626,7 @@ const ROOM_DEFS = {
       {id:'tr',type:'treadmill',x:210,y:190,name:'Treadmill',flavor:'The display shows someone ran 5km today.'},
       {id:'wt',type:'weights',x:490,y:185,name:'Weight Rack',flavor:'A barbell with 20kg plates loaded on each side.'},
       {id:'bi',type:'bike',x:760,y:185,name:'Exercise Bike',flavor:'A stationary bike. The resistance is set to maximum.'},
-      {id:'bn',type:'desk',x:360,y:420,w:180,h:36,col:'#6a5a4a',name:'Gym Bench',flavor:'A padded gym bench. There\'s a towel left on it.'},
+      {id:'bn',type:'desk',x:360,y:420,w:180,h:36,col:'#6a5a4a',name:'Gym Bench',flavor:'A padded gym bench. There\'s a towel left on it.',passable:true},
       {id:'wc',type:'cooler',x:840,y:420,name:'Water Cooler',flavor:'Cold water cooler. No cups left.'},
       {id:'mir',type:'cabinet',x:840,y:275,w:44,h:100,col:'#8a8a8a',name:'Mirror Wall',flavor:'A floor-to-ceiling mirror. You look like you should exercise more.'},
       {id:'lr',type:'locker_row',x:100,y:290,w:44,h:200,col:'#5588aa',name:'PE Lockers',flavor:'A row of lockers. Most have standard padlocks — except one which has a digital panel.'},
@@ -635,9 +636,9 @@ const ROOM_DEFS = {
   cafeteria: {
     theme:{ floor:'#D4C8B2', wall:'#8B6430', trim:'#6B4420', tileW:64 },
     objects:[
-      {id:'t1',type:'desk',x:260,y:305,w:130,h:58,col:'#A0784E',name:'Dining Table 1',flavor:'Leftover lunch trays. Someone spilled their orange juice.'},
-      {id:'t2',type:'desk',x:450,y:325,w:130,h:58,col:'#A0784E',name:'Dining Table 2',flavor:'Neatly cleared. A forgotten water bottle is the only thing left.'},
-      {id:'t3',type:'desk',x:640,y:305,w:130,h:58,col:'#A0784E',name:'Dining Table 3',flavor:'A copy of the school newsletter and some crumbs.'},
+      {id:'t1',type:'desk',x:260,y:305,w:130,h:58,col:'#A0784E',name:'Dining Table 1',flavor:'Leftover lunch trays. Someone spilled their orange juice.',passable:true},
+      {id:'t2',type:'desk',x:450,y:325,w:130,h:58,col:'#A0784E',name:'Dining Table 2',flavor:'Neatly cleared. A forgotten water bottle is the only thing left.',passable:true},
+      {id:'t3',type:'desk',x:640,y:305,w:130,h:58,col:'#A0784E',name:'Dining Table 3',flavor:'A copy of the school newsletter and some crumbs.',passable:true},
       {id:'vc',type:'vending',x:840,y:315,col:'#1a4a8a',name:'Vending Machine',flavor:"A cold drinks vending machine. You don't have any change."},
       {id:'nb',type:'noticeboard',x:100,y:162,w:80,h:60,name:'Notice Board',flavor:'Lunch menu, trip notices, and a missing cat poster.'},
       {id:'bi',type:'bin',x:840,y:430,name:'Recycling Bin',flavor:'Someone has put a sandwich wrapper in the paper recycling.'},
@@ -651,8 +652,8 @@ const ROOM_DEFS = {
       {id:'fc1',type:'cabinet',x:100,y:190,w:48,h:70,col:'#7a8a8a',name:'Filing Cabinet A',flavor:'Staff records and invoices. Locked.'},
       {id:'fc2',type:'cabinet',x:100,y:320,w:48,h:70,col:'#7a8a8a',name:'Filing Cabinet B',flavor:'Slightly ajar. Contains budget spreadsheets.'},
       {id:'fc3',type:'cabinet',x:840,y:295,w:48,h:70,col:'#7a8a8a',name:'Filing Cabinet C',flavor:'"IT EQUIPMENT — DO NOT DISCARD". Locked with a key.'},
-      {id:'vc1',type:'desk',x:310,y:400,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:'A waiting area chair. A magazine from 2019 on the armrest.'},
-      {id:'vc2',type:'desk',x:590,y:400,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:"A coat has been left draped over it."},
+      {id:'vc1',type:'desk',x:310,y:400,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:'A waiting area chair. A magazine from 2019 on the armrest.',passable:true},
+      {id:'vc2',type:'desk',x:590,y:400,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:"A coat has been left draped over it.",passable:true},
       {id:'pl1',type:'plant',x:840,y:145,name:'Office Plant',flavor:'A neat fern. The admin staff clearly look after it well.'},
       {id:'nb1',type:'noticeboard',x:840,y:365,w:44,h:80,name:'Notice Board',flavor:'Fire escape routes, IT security policies, birthday card for "Dave".'},
       {id:'pr',type:'cabinet',x:100,y:430,w:64,h:44,col:'#cccccc',name:'Printer/Scanner',flavor:'A multifunction printer. The scan history is locked.'},
@@ -674,7 +675,7 @@ const ROOM_DEFS = {
       {id:'sr4',type:'server_shelf',x:740,y:200,w:54,h:130,name:'Server Rack D',flavor:'This rack hums loudly. The cooling fan is working overtime.'},
       {id:'ns',type:'computer',x:840,y:385,w:52,h:38,name:'Network Switch Panel',flavor:'A managed switch. All port lights are flashing rapidly.'},
       {id:'ups',type:'cabinet',x:100,y:420,w:58,h:48,col:'#2a3a2a',name:'UPS Battery Backup',flavor:'Provides 20 minutes of emergency power.'},
-      {id:'md',type:'desk',x:500,y:425,w:110,h:50,col:'#1e2030',name:'Admin Desk',flavor:'Network diagrams are pinned above a small monitor.'},
+      {id:'md',type:'desk',x:500,y:425,w:110,h:50,col:'#1e2030',name:'Admin Desk',flavor:'Network diagrams are pinned above a small monitor.',passable:true},
       {id:'ac',type:'aircon',x:450,y:96,w:180,name:'Industrial Air Con',flavor:'Critical for keeping servers cool. Running at full capacity.'},
     ]
   },
@@ -684,9 +685,9 @@ const ROOM_DEFS = {
       {id:'rd',type:'reception',x:490,y:195,w:220,h:56,name:'Reception Counter',flavor:'The main front desk. A sign says "PLEASE SIGN IN".'},
       {id:'rc',type:'computer',x:615,y:178,w:52,h:38,name:'Reception Computer',isChallenge:true},
       {id:'si',type:'signin',x:360,y:188,name:'Sign-In Book',flavor:'Today\'s log. A visitor signed in at 7:30am — before school opened.'},
-      {id:'vc1',type:'desk',x:195,y:390,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:'A leaflet about the school open day is on the seat.'},
-      {id:'vc2',type:'desk',x:450,y:400,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:"A visitor's lanyard has been left behind."},
-      {id:'vc3',type:'desk',x:705,y:390,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:'A school achievements brochure is on this one.'},
+      {id:'vc1',type:'desk',x:195,y:390,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:'A leaflet about the school open day is on the seat.',passable:true},
+      {id:'vc2',type:'desk',x:450,y:400,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:"A visitor's lanyard has been left behind.",passable:true},
+      {id:'vc3',type:'desk',x:705,y:390,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:'A school achievements brochure is on this one.',passable:true},
       {id:'mr',type:'magazine',x:840,y:310,name:'Magazine Rack',flavor:'School newsletters and prospectuses from 2018.'},
       {id:'pl1',type:'plant',x:100,y:145,name:'Tall Plant',flavor:'A large cheese plant in a terracotta pot. Very welcoming.'},
       {id:'pl2',type:'plant',x:840,y:145,name:'Plant',flavor:'Someone has drawn a smiley face in the soil.'},
@@ -715,7 +716,7 @@ const ROOM_DEFS = {
       {id:'wf',type:'sink',x:840,y:380,name:'Water Fountain',flavor:'The button sticks and dribbles water everywhere.'},
       {id:'lp',type:'lostprop',x:840,y:450,name:'Lost Property Box',flavor:'A cardboard box — water bottles, a single shoe, someone\'s homework.'},
       {id:'bi',type:'bin',x:840,y:285,name:'Recycling Bin',flavor:'Someone put a banana skin in the paper recycling.'},
-      {id:'bn',type:'desk',x:430,y:455,w:200,h:36,col:'#6a6050',name:'Corridor Bench',flavor:'A bench for waiting outside classrooms. Well worn.'},
+      {id:'bn',type:'desk',x:430,y:455,w:200,h:36,col:'#6a6050',name:'Corridor Bench',flavor:'A bench for waiting outside classrooms. Well worn.',passable:true},
       {id:'us',type:'usb',x:465,y:330,w:36,h:16,name:'USB Stick (on floor)',isChallenge:true,passable:true},
     ]
   },
@@ -737,7 +738,7 @@ class RoomExplorer {
     this.theme = def.theme;
     this.objects = def.objects;
 
-    this.char = { x: EW/2, y: 428, facing:'up', moving:false, frame:0, ft:0 };
+    this.char = { x: EW/2, y: 410, facing:'up', moving:false, frame:0, ft:0 };
     this.keys = {};
     this.nearObj = null;
     this.msgBox = null;
@@ -782,15 +783,15 @@ class RoomExplorer {
     else { c.frame=0; c.ft=0; }
 
     let nx=c.x+dx*ESPEED*dt, ny=c.y+dy*ESPEED*dt;
-    nx = Math.max(EWALL+ECW, Math.min(EW-EWALL-ECW, nx));
-    ny = Math.max(EWALL+ECH, Math.min(EH-EWALL-ECH, ny));
+    nx = Math.max(EWALL+ECOL, Math.min(EW-EWALL-ECOL, nx));
+    ny = Math.max(EWALL+ECOL, Math.min(EH-EWALL-ECOL, ny));
 
     let bx=false, by=false;
     for (const obj of this.objects) {
       if (obj.passable) continue;
       const ow=(obj.w||60)/2, oh=(obj.h||60)/2;
-      if (nx+ECW>obj.x-ow && nx-ECW<obj.x+ow && c.y+ECH>obj.y-oh && c.y-ECH<obj.y+oh) bx=true;
-      if (c.x+ECW>obj.x-ow && c.x-ECW<obj.x+ow && ny+ECH>obj.y-oh && ny-ECH<obj.y+oh) by=true;
+      if (nx+ECOL>obj.x-ow && nx-ECOL<obj.x+ow && c.y+ECOL>obj.y-oh && c.y-ECOL<obj.y+oh) bx=true;
+      if (c.x+ECOL>obj.x-ow && c.x-ECOL<obj.x+ow && ny+ECOL>obj.y-oh && ny-ECOL<obj.y+oh) by=true;
     }
     if (!bx) c.x = nx;
     if (!by) c.y = ny;

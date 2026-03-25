@@ -346,9 +346,24 @@ function openExplorer(roomId) {
   $('room-grid').style.display = 'none';
   showEl('explorer-wrap');
   $('game-body').classList.add('explorer-mode');
-  if (window._roomExplorer) { window._roomExplorer.destroy(); window._roomExplorer = null; }
   const canvas = $('explorer-canvas');
   canvas.width = 900; canvas.height = 540;
+  canvas.style.width = ''; canvas.style.height = '';
+  // Size canvas to fit available space after layout settles
+  requestAnimationFrame(() => {
+    const wrap = $('explorer-wrap');
+    const W = Math.max(1, wrap.clientWidth - 4);
+    const H = Math.max(1, wrap.clientHeight - 4);
+    const ratio = 900 / 540;
+    if (W / H > ratio) {
+      canvas.style.height = H + 'px';
+      canvas.style.width  = Math.floor(H * ratio) + 'px';
+    } else {
+      canvas.style.width  = W + 'px';
+      canvas.style.height = Math.floor(W / ratio) + 'px';
+    }
+  });
+  if (window._roomExplorer) { window._roomExplorer.destroy(); window._roomExplorer = null; }
   window._roomExplorer = new RoomExplorer({
     canvas, roomId, role: client.myRole,
     onChallenge: () => {
