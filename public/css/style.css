@@ -367,7 +367,7 @@ html, body {
 #game-body.explorer-mode .side-panel {
   width: 100%;
   min-width: unset;
-  height: 280px;
+  height: 360px;
   flex-direction: row;
   align-items: flex-start;
   border-left: none;
@@ -397,7 +397,7 @@ html, body {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  max-height: 250px;
+  max-height: 320px;
 }
 #game-body.explorer-mode #leave-room-btn {
   flex-shrink: 0;
@@ -938,7 +938,7 @@ html, body {
   align-items: flex-start;
 }
 .scenario-avatar { font-size: 2rem; }
-.scenario-text { font-size: 0.78rem; line-height: 1.6; color: var(--text-dim); }
+.scenario-text { font-size: 0.78rem; line-height: 1.6; color: var(--text); }
 .scenario-options { display: flex; flex-direction: column; gap: 8px; }
 .scenario-option {
   background: var(--card);
@@ -950,6 +950,8 @@ html, body {
   line-height: 1.5;
   transition: all 0.15s;
   text-align: left;
+  color: var(--text);
+  font-family: var(--font-main);
 }
 .scenario-option:hover { border-color: var(--cyan-dim); }
 .scenario-option.selected { border-color: var(--cyan); background: rgba(0,212,255,0.06); }

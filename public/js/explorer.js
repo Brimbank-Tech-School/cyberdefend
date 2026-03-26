@@ -788,7 +788,7 @@ class RoomExplorer {
 
     let bx=false, by=false;
     for (const obj of this.objects) {
-      if (obj.passable) continue;
+      if (obj.passable || obj.isChallenge) continue; // challenge objects never block movement
       const ow=(obj.w||60)/2, oh=(obj.h||60)/2;
       if (nx+ECOL>obj.x-ow && nx-ECOL<obj.x+ow && c.y+ECOL>obj.y-oh && c.y-ECOL<obj.y+oh) bx=true;
       if (c.x+ECOL>obj.x-ow && c.x-ECOL<obj.x+ow && ny+ECOL>obj.y-oh && ny-ECOL<obj.y+oh) by=true;
@@ -796,10 +796,15 @@ class RoomExplorer {
     if (!bx) c.x = nx;
     if (!by) c.y = ny;
 
+    // Always prefer challenge objects; among same type, pick closest
     let best=null, bd=EINTERACT;
     for (const obj of this.objects) {
       const d=Math.hypot(obj.x-c.x, obj.y-c.y);
-      if (d<bd) { best=obj; bd=d; }
+      if (d >= EINTERACT) continue;
+      if (!best) { best=obj; bd=d; continue; }
+      if (obj.isChallenge && !best.isChallenge) { best=obj; bd=d; continue; }
+      if (!obj.isChallenge && best.isChallenge) continue;
+      if (d < bd) { best=obj; bd=d; }
     }
     this.nearObj = best;
 
@@ -851,6 +856,19 @@ class RoomExplorer {
         ctx.restore();
       }
       drawObject(ctx, obj);
+      // Persistent beacon above challenge objects so players always know where to go
+      if (obj.isChallenge) {
+        const pulse = 0.65 + Math.sin(Date.now()/380)*0.35;
+        const ix = obj.x, iy = obj.y - (obj.h||60)/2 - 18;
+        ctx.save(); ctx.globalAlpha = pulse;
+        ctx.fillStyle = '#ff3355';
+        ctx.beginPath(); ctx.arc(ix, iy, 9, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('!', ix, iy);
+        ctx.restore();
+      }
     }
 
     // Character rendered in y-sorted order with objects

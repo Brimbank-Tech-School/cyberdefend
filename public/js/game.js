@@ -355,7 +355,7 @@ function openExplorer(roomId) {
     const aiFeedH  = (aiFeedEl && !aiFeedEl.classList.contains('hidden')) ? (aiFeedEl.offsetHeight || 30) : 0;
     const hudH     = $('hud')         ? $('hud').offsetHeight         : 64;
     const bannerH  = $('role-banner') ? $('role-banner').offsetHeight : 40;
-    const panelH   = 280;
+    const panelH   = 360;
     const W = Math.max(200, window.innerWidth  - 8);
     const H = Math.max(100, window.innerHeight - hudH - bannerH - aiFeedH - panelH - 12);
     const ratio = 900 / 540;
