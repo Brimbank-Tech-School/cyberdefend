@@ -30,15 +30,16 @@ const ROOM_DEFINITIONS = [
 ];
 
 // ─── Challenge Data Generators ───────────────────────────────────────────────
-function generateChallengeData(challengeType) {
+function generateChallengeData(challengeType, variant) {
+  const v = (variant || 0);
   switch (challengeType) {
-    case 'password_crack': return generatePasswordChallenge();
-    case 'phishing':       return generatePhishingChallenge();
-    case 'firewall':       return generateFirewallChallenge();
-    case 'encryption':     return generateEncryptionChallenge();
-    case 'malware_detect': return generateMalwareChallenge();
+    case 'password_crack': return generatePasswordChallenge(v);
+    case 'phishing':       return generatePhishingChallenge(v);
+    case 'firewall':       return generateFirewallChallenge(v);
+    case 'encryption':     return generateEncryptionChallenge(v);
+    case 'malware_detect': return generateMalwareChallenge(v);
     case 'network_analysis': return generateNetworkChallenge();
-    case 'social_engineering': return generateSocialChallenge();
+    case 'social_engineering': return generateSocialChallenge(v);
     case 'usb_drop':       return generateUsbChallenge();
     default:               return {};
   }
@@ -53,7 +54,7 @@ function shuffle(arr) {
   return a;
 }
 
-function generatePasswordChallenge() {
+function generatePasswordChallenge(variant) {
   const pools = [
     [
       { text: 'abc123', score: 1 },
@@ -85,14 +86,35 @@ function generatePasswordChallenge() {
       { text: 'R#4nD0m!$3cur3', score: 10 },
       { text: 'test123', score: 1 },
     ],
+    [
+      { text: 'princess', score: 1 },
+      { text: 'sunshine', score: 1 },
+      { text: 'K9$pLw#mQ2!x', score: 10 },
+      { text: 'chocolate', score: 1 },
+      { text: 'Secure#2026', score: 7 },
+      { text: 'batman', score: 1 },
+      { text: 'Wq!8rN#vZ3$k', score: 10 },
+      { text: 'cheese123', score: 2 },
+    ],
+    [
+      { text: 'london123', score: 2 },
+      { text: 'password!', score: 1 },
+      { text: 'Mx7$kP!nW4#z', score: 10 },
+      { text: 'starwars', score: 1 },
+      { text: 'Winter2025!', score: 6 },
+      { text: 'superman', score: 1 },
+      { text: 'Jq#9vL!rX5$m', score: 10 },
+      { text: 'biscuit99', score: 2 },
+    ],
   ];
-  const pool = shuffle(pools[Math.floor(Math.random() * pools.length)]);
+  // Use variant to cycle through pools so consecutive entrants see different passwords
+  const pool = shuffle(pools[variant % pools.length]);
   const weakest = pool.reduce((min, p) => p.score < min.score ? p : min);
   const strongest = pool.reduce((max, p) => p.score > max.score ? p : max);
   return { passwords: pool.map(p => p.text), weakest: weakest.text, strongest: strongest.text };
 }
 
-function generatePhishingChallenge() {
+function generatePhishingChallenge(variant) {
   const templates = [
     {
       from: 'IT-Support@sch00l-helpdesk.net',
@@ -150,7 +172,8 @@ function generatePhishingChallenge() {
       ],
     },
   ];
-  const t = templates[Math.floor(Math.random() * templates.length)];
+  // Use variant to cycle templates — each entry to the room shows a different email
+  const t = templates[variant % templates.length];
   const malicious = t.elements.filter(e => e.isMalicious).map(e => e.id);
   return {
     from: t.from,
@@ -162,7 +185,7 @@ function generatePhishingChallenge() {
   };
 }
 
-function generateFirewallChallenge() {
+function generateFirewallChallenge(variant) {
   const allRules = [
     { id: 'r1', label: 'Block Port 22 (SSH)', safe: true },
     { id: 'r2', label: 'Allow Port 80 (HTTP)', safe: true },
@@ -183,9 +206,10 @@ function generateFirewallChallenge() {
   };
 }
 
-function generateEncryptionChallenge() {
-  const words = ['DATA', 'FILE', 'CODE', 'HACK', 'SAFE', 'LOCK', 'KEYS', 'BITS'];
-  const word = words[Math.floor(Math.random() * words.length)];
+function generateEncryptionChallenge(variant) {
+  const words = ['DATA', 'FILE', 'CODE', 'HACK', 'SAFE', 'LOCK', 'KEYS', 'BITS', 'BYTE', 'PING', 'ROOT', 'SEND'];
+  // Use variant to cycle words so repeated room entries show a different word
+  const word = words[variant % words.length];
   const shifts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   const shift = shifts[Math.floor(Math.random() * 6) + 1];
   const encrypted = word.split('').map(c => {
@@ -197,8 +221,8 @@ function generateEncryptionChallenge() {
   return { word, encrypted, shift, options: shuffle(options) };
 }
 
-function generateMalwareChallenge() {
-  const safeFiles = shuffle([
+function generateMalwareChallenge(variant) {
+  const allSafe = [
     { name: 'homework_essay.docx', size: '44 KB', type: 'doc' },
     { name: 'holiday_photo.jpg', size: '3.2 MB', type: 'img' },
     { name: 'readme.txt', size: '1 KB', type: 'txt' },
@@ -206,17 +230,24 @@ function generateMalwareChallenge() {
     { name: 'project_notes.docx', size: '88 KB', type: 'doc' },
     { name: 'class_photo.png', size: '1.8 MB', type: 'img' },
     { name: 'timetable.xlsx', size: '32 KB', type: 'xls' },
-  ]).slice(0, 5);
-
-  const malwareFiles = shuffle([
+    { name: 'music_playlist.txt', size: '2 KB', type: 'txt' },
+    { name: 'science_project.pptx', size: '1.1 MB', type: 'doc' },
+  ];
+  const allMalware = [
     { name: 'system32update.exe', size: '2 KB', type: 'exe' },
     { name: 'invoice_2026.pdf.exe', size: '18 KB', type: 'exe' },
     { name: 'network_scan.bat', size: '4 KB', type: 'bat' },
     { name: 'freegame_setup.exe', size: '3 KB', type: 'exe' },
     { name: 'school_virus.vbs', size: '1 KB', type: 'vbs' },
     { name: 'update_now.scr', size: '6 KB', type: 'scr' },
-  ]).slice(0, 3);
-
+    { name: 'patch_install.bat', size: '5 KB', type: 'bat' },
+    { name: 'crack_wifi.exe', size: '9 KB', type: 'exe' },
+  ];
+  // Rotate which files appear based on variant so each entry shows a fresh set
+  const safeOffset = variant % (allSafe.length - 4);
+  const malOffset  = variant % (allMalware.length - 2);
+  const safeFiles    = allSafe.slice(safeOffset, safeOffset + 5);
+  const malwareFiles = allMalware.slice(malOffset, malOffset + 3);
   const allFiles = shuffle([...safeFiles, ...malwareFiles]);
   return {
     files: allFiles,
@@ -244,7 +275,7 @@ function generateNetworkChallenge() {
   return { logs, attackerIP, scenarioLabel: sc.label };
 }
 
-function generateSocialChallenge() {
+function generateSocialChallenge(variant) {
   const scenarios = [
     {
       scenario: 'A stranger in the corridor claims to be a new IT technician and asks for your school login to "run a test".',
@@ -317,7 +348,8 @@ function generateSocialChallenge() {
       ],
     },
   ];
-  return scenarios[Math.floor(Math.random() * scenarios.length)];
+  // Cycle scenarios by variant so each room entry shows a fresh scenario
+  return scenarios[variant % scenarios.length];
 }
 
 function generateUsbChallenge() {
@@ -512,7 +544,8 @@ function scheduleAiTurn(difficulty) {
     gameState.players[aiRole].currentRoomId = room.id;
     room.occupant = aiRole;
     if (room.challengeType !== 'usb_drop') {
-      room.challengeData = generateChallengeData(room.challengeType);
+      room.challengeVariantIndex = (room.challengeVariantIndex || 0) + 1;
+      room.challengeData = generateChallengeData(room.challengeType, room.challengeVariantIndex);
     }
 
     // Broadcast AI movement
@@ -566,7 +599,10 @@ let gameState = null;
 function createInitialGameState(hackerSocket, hackerName, controllerSocket, controllerName) {
   const rooms = {};
   ROOM_DEFINITIONS.forEach(def => {
-    const challengeData = generateChallengeData(def.challenge);
+    // Start each room at a random variant offset so the very first challenge
+    // shown is already different across rooms and game sessions
+    const startVariant = Math.floor(Math.random() * 50);
+    const challengeData = generateChallengeData(def.challenge, startVariant);
     rooms[def.id] = {
       id: def.id,
       name: def.name,
@@ -578,6 +614,7 @@ function createInitialGameState(hackerSocket, hackerName, controllerSocket, cont
       occupant: null,
       usbPlanted: false,
       cooldownUntil: null,
+      challengeVariantIndex: startVariant,
       challengeData,
     };
   });
@@ -797,9 +834,11 @@ io.on('connection', (socket) => {
     gameState.players[role].currentRoomId = roomId;
     room.occupant = role;
 
-    // Refresh challenge data each entry (except USB)
+    // Refresh challenge data each entry with an incremented variant so the
+    // controller always sees a different question from the hacker who just left
     if (room.challengeType !== 'usb_drop') {
-      room.challengeData = generateChallengeData(room.challengeType);
+      room.challengeVariantIndex = (room.challengeVariantIndex || 0) + 1;
+      room.challengeData = generateChallengeData(room.challengeType, room.challengeVariantIndex);
     }
 
     const challengeData = { ...room.challengeData };

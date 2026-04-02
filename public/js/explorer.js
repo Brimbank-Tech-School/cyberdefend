@@ -856,15 +856,16 @@ class RoomExplorer {
         ctx.restore();
       }
       drawObject(ctx, obj);
-      // Persistent beacon above challenge objects so players always know where to go
+      // Persistent beacon above challenge objects — always visible, clamped inside floor
       if (obj.isChallenge) {
-        const pulse = 0.65 + Math.sin(Date.now()/380)*0.35;
-        const ix = obj.x, iy = obj.y - (obj.h||60)/2 - 18;
+        const pulse = 0.7 + Math.sin(Date.now()/350)*0.3;
+        const ix = obj.x;
+        const iy = Math.max(EWALL + 16, obj.y - (obj.h||60)/2 - 20);
         ctx.save(); ctx.globalAlpha = pulse;
-        ctx.fillStyle = '#ff3355';
-        ctx.beginPath(); ctx.arc(ix, iy, 9, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ff2244';
+        ctx.beginPath(); ctx.arc(ix, iy, 11, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 11px sans-serif';
+        ctx.font = 'bold 13px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('!', ix, iy);
         ctx.restore();
@@ -878,15 +879,15 @@ class RoomExplorer {
     // Interaction prompt (bottom centre)
     if (this.nearObj && !this.frozen) {
       const label = `[ E ]  ${this.nearObj.name}`;
-      ctx.font = '13px "Share Tech Mono",monospace';
+      ctx.font = '15px "Share Tech Mono",monospace';
       const tw = ctx.measureText(label).width;
-      const bx=EW/2-tw/2-14, by=EH-54, bw=tw+28, bh=30;
-      ctx.fillStyle = 'rgba(8,10,20,0.85)';
+      const bx=EW/2-tw/2-16, by=EH-58, bw=tw+32, bh=34;
+      ctx.fillStyle = 'rgba(8,10,20,0.88)';
       ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,6); ctx.fill();
-      ctx.strokeStyle = this.nearObj.isChallenge ? 'rgba(255,68,102,0.6)' : 'rgba(0,212,255,0.5)';
-      ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,6); ctx.stroke();
+      ctx.strokeStyle = this.nearObj.isChallenge ? 'rgba(255,68,102,0.7)' : 'rgba(0,212,255,0.6)';
+      ctx.lineWidth=1.5; ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,6); ctx.stroke();
       ctx.fillStyle = this.nearObj.isChallenge ? '#ff4466' : '#00ffff';
-      ctx.textAlign='center'; ctx.fillText(label, EW/2, by+21);
+      ctx.textAlign='center'; ctx.fillText(label, EW/2, by+23);
     }
 
     // Speech bubble
@@ -912,8 +913,8 @@ class RoomExplorer {
     }
 
     // Controls hint
-    ctx.save(); ctx.globalAlpha=0.3; ctx.fillStyle='#fff';
-    ctx.font='11px "Share Tech Mono",monospace'; ctx.textAlign='left';
+    ctx.save(); ctx.globalAlpha=0.35; ctx.fillStyle='#fff';
+    ctx.font='13px "Share Tech Mono",monospace'; ctx.textAlign='left';
     ctx.fillText('Arrow keys / WASD — move  ·  [E] or click — interact  ·  [ESC] — leave room', EWALL+6, EH-8);
     ctx.restore();
   }
