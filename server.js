@@ -107,7 +107,6 @@ function generatePasswordChallenge(variant) {
       { text: 'biscuit99', score: 2 },
     ],
   ];
-  // Use variant to cycle through pools so consecutive entrants see different passwords
   const pool = shuffle(pools[variant % pools.length]);
   const weakest = pool.reduce((min, p) => p.score < min.score ? p : min);
   const strongest = pool.reduce((max, p) => p.score > max.score ? p : max);
@@ -172,7 +171,6 @@ function generatePhishingChallenge(variant) {
       ],
     },
   ];
-  // Use variant to cycle templates — each entry to the room shows a different email
   const t = templates[variant % templates.length];
   const malicious = t.elements.filter(e => e.isMalicious).map(e => e.id);
   return {
@@ -200,15 +198,11 @@ function generateFirewallChallenge(variant) {
   const unsafe = allRules.filter(r => !r.safe);
   const safe = shuffle(allRules.filter(r => r.safe)).slice(0, 6);
   const rules = shuffle([...safe, ...unsafe]);
-  return {
-    rules,
-    vulnerableIds: unsafe.map(r => r.id),
-  };
+  return { rules, vulnerableIds: unsafe.map(r => r.id) };
 }
 
 function generateEncryptionChallenge(variant) {
   const words = ['DATA', 'FILE', 'CODE', 'HACK', 'SAFE', 'LOCK', 'KEYS', 'BITS', 'BYTE', 'PING', 'ROOT', 'SEND'];
-  // Use variant to cycle words so repeated room entries show a different word
   const word = words[variant % words.length];
   const shifts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   const shift = shifts[Math.floor(Math.random() * 6) + 1];
@@ -243,16 +237,12 @@ function generateMalwareChallenge(variant) {
     { name: 'patch_install.bat', size: '5 KB', type: 'bat' },
     { name: 'crack_wifi.exe', size: '9 KB', type: 'exe' },
   ];
-  // Rotate which files appear based on variant so each entry shows a fresh set
   const safeOffset = variant % (allSafe.length - 4);
   const malOffset  = variant % (allMalware.length - 2);
   const safeFiles    = allSafe.slice(safeOffset, safeOffset + 5);
   const malwareFiles = allMalware.slice(malOffset, malOffset + 3);
   const allFiles = shuffle([...safeFiles, ...malwareFiles]);
-  return {
-    files: allFiles,
-    malwareNames: malwareFiles.map(f => f.name),
-  };
+  return { files: allFiles, malwareNames: malwareFiles.map(f => f.name) };
 }
 
 function generateNetworkChallenge() {
@@ -348,7 +338,6 @@ function generateSocialChallenge(variant) {
       ],
     },
   ];
-  // Cycle scenarios by variant so each room entry shows a fresh scenario
   return scenarios[variant % scenarios.length];
 }
 
@@ -492,17 +481,15 @@ function getWrongAnswer(room, role) {
   }
 }
 
-function pickAiTargetRoom(aiRole) {
-  if (!gameState) return null;
-  const rooms = Object.values(gameState.rooms);
+function pickAiTargetRoom(aiRole, gs) {
+  if (!gs) return null;
+  const rooms = Object.values(gs.rooms);
   const now = Date.now();
 
-  // Filter out rooms on cooldown and rooms already owned by AI
   const available = rooms.filter(r => {
     if (r.cooldownUntil && now < r.cooldownUntil) return false;
     if (aiRole === 'hacker' && r.status === 'red') return false;
     if (aiRole === 'controller' && r.status === 'green') return false;
-    // USB rooms: hacker can only plant if not planted; controller only if planted
     if (r.challengeType === 'usb_drop') {
       if (aiRole === 'hacker' && r.usbPlanted) return false;
       if (aiRole === 'controller' && !r.usbPlanted && r.status !== 'red') return false;
@@ -512,51 +499,50 @@ function pickAiTargetRoom(aiRole) {
 
   if (available.length === 0) return null;
 
-  // Priority: contest opponent's rooms first, then neutral
   const contested = available.filter(r =>
     aiRole === 'hacker' ? r.status === 'green' : r.status === 'red'
   );
   const neutral = available.filter(r => r.status === 'neutral');
   const pool = contested.length > 0 ? contested : neutral.length > 0 ? neutral : available;
-
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function scheduleAiTurn(difficulty) {
-  if (!gameState || !gameState.ai) return;
+function scheduleAiTurn(difficulty, gameCode) {
+  const game = games.get(gameCode);
+  if (!game || !game.gameState || !game.gameState.ai) return;
   const cfg = AI_DIFFICULTY[difficulty] || AI_DIFFICULTY.medium;
   const delay = cfg.minDelay + Math.random() * (cfg.maxDelay - cfg.minDelay);
 
-  gameState.ai.turnTimeout = setTimeout(() => {
-    if (!gameState || !gameState.ai) return;
-    const aiRole = gameState.ai.role;
-    const room = pickAiTargetRoom(aiRole);
+  game.gameState.ai.turnTimeout = setTimeout(() => {
+    const g = games.get(gameCode);
+    if (!g || !g.gameState || !g.gameState.ai) return;
+    const gs = g.gameState;
+    const aiRole = gs.ai.role;
+    const room = pickAiTargetRoom(aiRole, gs);
     if (!room) {
-      scheduleAiTurn(difficulty);
+      scheduleAiTurn(difficulty, gameCode);
       return;
     }
 
-    // Move AI into room
-    const prevRoomId = gameState.players[aiRole].currentRoomId;
-    if (prevRoomId && gameState.rooms[prevRoomId]) {
-      gameState.rooms[prevRoomId].occupant = null;
+    const prevRoomId = gs.players[aiRole].currentRoomId;
+    if (prevRoomId && gs.rooms[prevRoomId]) {
+      gs.rooms[prevRoomId].occupant = null;
     }
-    gameState.players[aiRole].currentRoomId = room.id;
+    gs.players[aiRole].currentRoomId = room.id;
     room.occupant = aiRole;
     if (room.challengeType !== 'usb_drop') {
       room.challengeVariantIndex = (room.challengeVariantIndex || 0) + 1;
       room.challengeData = generateChallengeData(room.challengeType, room.challengeVariantIndex);
     }
 
-    // Broadcast AI movement
-    io.emit('room_occupancy_update', { roomId: room.id, occupant: aiRole, prevRoomId });
-    // Tell human the AI is in a room
-    io.emit('ai_activity', { roomId: room.id, aiRole, action: 'entered' });
+    io.to(gameCode).emit('room_occupancy_update', { roomId: room.id, occupant: aiRole, prevRoomId });
+    io.to(gameCode).emit('ai_activity', { roomId: room.id, aiRole, action: 'entered' });
 
-    // Simulate "thinking" then submit answer
     const thinkTime = 1500 + Math.random() * 2000;
     setTimeout(() => {
-      if (!gameState || !gameState.ai) return;
+      const g2 = games.get(gameCode);
+      if (!g2 || !g2.gameState || !g2.gameState.ai) return;
+      const gs2 = g2.gameState;
       const success = Math.random() < cfg.successRate;
       const answer = success ? getCorrectAnswer(room, aiRole) : getWrongAnswer(room, aiRole);
       const valid = validateAnswer(room, aiRole, answer);
@@ -571,36 +557,57 @@ function scheduleAiTurn(difficulty) {
           if (room.challengeType === 'usb_drop') room.usbPlanted = false;
         }
         if (prevStatus !== room.status) room.cooldownUntil = Date.now() + 30000;
-        gameState.scores = recalcScores(gameState.rooms);
-        io.emit('room_state_update', {
+        gs2.scores = recalcScores(gs2.rooms);
+        io.to(gameCode).emit('room_state_update', {
           roomId: room.id,
           status: room.status,
           usbPlanted: room.usbPlanted,
-          scores: gameState.scores,
+          scores: gs2.scores,
         });
-        io.emit('ai_activity', { roomId: room.id, aiRole, action: 'success' });
+        io.to(gameCode).emit('ai_activity', { roomId: room.id, aiRole, action: 'success' });
       } else {
-        io.emit('ai_activity', { roomId: room.id, aiRole, action: 'failed' });
+        io.to(gameCode).emit('ai_activity', { roomId: room.id, aiRole, action: 'failed' });
       }
 
-      // Leave room
       room.occupant = null;
-      gameState.players[aiRole].currentRoomId = null;
-      io.emit('room_occupancy_update', { roomId: room.id, occupant: null, prevRoomId: null });
+      gs2.players[aiRole].currentRoomId = null;
+      io.to(gameCode).emit('room_occupancy_update', { roomId: room.id, occupant: null, prevRoomId: null });
 
-      scheduleAiTurn(difficulty);
+      scheduleAiTurn(difficulty, gameCode);
     }, thinkTime);
   }, delay);
 }
 
-// ─── Game State ───────────────────────────────────────────────────────────────
-let gameState = null;
+// ─── Multi-game State ─────────────────────────────────────────────────────────
+const games = new Map();      // gameCode → { lobby, gameState }
+const socketGame = new Map(); // socketId → gameCode
 
+function generateGameCode() {
+  // No ambiguous chars (0/O, 1/I/L removed)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code;
+  do {
+    code = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  } while (games.has(code));
+  return code;
+}
+
+function createGame(code) {
+  games.set(code, {
+    lobby: { players: {}, phase: 'waiting' },
+    gameState: null,
+  });
+}
+
+function getGameBySocket(socketId) {
+  const code = socketGame.get(socketId);
+  return code ? { code, game: games.get(code) } : null;
+}
+
+// ─── Game State Helpers ───────────────────────────────────────────────────────
 function createInitialGameState(hackerSocket, hackerName, controllerSocket, controllerName) {
   const rooms = {};
   ROOM_DEFINITIONS.forEach(def => {
-    // Start each room at a random variant offset so the very first challenge
-    // shown is already different across rooms and game sessions
     const startVariant = Math.floor(Math.random() * 50);
     const challengeData = generateChallengeData(def.challenge, startVariant);
     rooms[def.id] = {
@@ -659,36 +666,31 @@ function recalcScores(rooms) {
   return { hacker, controller };
 }
 
-function endGame() {
-  if (!gameState) return;
-  clearInterval(gameState.timerInterval);
-  gameState.timerInterval = null;
-  if (gameState.ai && gameState.ai.turnTimeout) {
-    clearTimeout(gameState.ai.turnTimeout);
-  }
-  const scores = recalcScores(gameState.rooms);
+function endGame(gameCode) {
+  const game = games.get(gameCode);
+  if (!game || !game.gameState) return;
+  const gs = game.gameState;
+  clearInterval(gs.timerInterval);
+  gs.timerInterval = null;
+  if (gs.ai && gs.ai.turnTimeout) clearTimeout(gs.ai.turnTimeout);
+
+  const scores = recalcScores(gs.rooms);
   let winner = 'draw';
   if (scores.hacker > scores.controller) winner = 'hacker';
   else if (scores.controller > scores.hacker) winner = 'controller';
 
-  io.emit('game_over', {
+  io.to(gameCode).emit('game_over', {
     winner,
     scores,
-    rooms: getPublicRooms(gameState.rooms),
-    hackerName: gameState.players.hacker.name,
-    controllerName: gameState.players.controller.name,
+    rooms: getPublicRooms(gs.rooms),
+    hackerName: gs.players.hacker.name,
+    controllerName: gs.players.controller.name,
   });
-  gameState = null;
-  lobby = { players: {}, phase: 'waiting' };
+  // Remove the game — sockets will clean up socketGame on disconnect
+  games.delete(gameCode);
 }
 
-// ─── Lobby State ──────────────────────────────────────────────────────────────
-let lobby = {
-  players: {},
-  phase: 'waiting',
-};
-
-function getLobbyUpdate() {
+function getLobbyUpdate(lobby) {
   return {
     players: Object.values(lobby.players).map(p => ({
       name: p.name,
@@ -701,7 +703,10 @@ function getLobbyUpdate() {
   };
 }
 
-function tryStartGame() {
+function tryStartGame(gameCode) {
+  const game = games.get(gameCode);
+  if (!game) return;
+  const { lobby } = game;
   const players = Object.values(lobby.players);
   if (players.length !== 2) return;
   const hacker = players.find(p => p.role === 'hacker' && p.ready);
@@ -709,28 +714,31 @@ function tryStartGame() {
   if (!hacker || !controller) return;
 
   lobby.phase = 'in_game';
-  gameState = createInitialGameState(hacker.socketId, hacker.name, controller.socketId, controller.name);
+  game.gameState = createInitialGameState(hacker.socketId, hacker.name, controller.socketId, controller.name);
 
-  const publicRooms = getPublicRooms(gameState.rooms);
+  const publicRooms = getPublicRooms(game.gameState.rooms);
 
   io.to(hacker.socketId).emit('game_start', {
     yourRole: 'hacker',
     rooms: publicRooms,
     players: { hacker: hacker.name, controller: controller.name },
     secondsRemaining: 600,
+    gameCode,
   });
   io.to(controller.socketId).emit('game_start', {
     yourRole: 'controller',
     rooms: publicRooms,
     players: { hacker: hacker.name, controller: controller.name },
     secondsRemaining: 600,
+    gameCode,
   });
 
-  gameState.timerInterval = setInterval(() => {
-    if (!gameState) return;
-    gameState.secondsRemaining--;
-    io.emit('tick', { secondsRemaining: gameState.secondsRemaining });
-    if (gameState.secondsRemaining <= 0) endGame();
+  game.gameState.timerInterval = setInterval(() => {
+    const g = games.get(gameCode);
+    if (!g || !g.gameState) return;
+    g.gameState.secondsRemaining--;
+    io.to(gameCode).emit('tick', { secondsRemaining: g.gameState.secondsRemaining });
+    if (g.gameState.secondsRemaining <= 0) endGame(gameCode);
   }, 1000);
 }
 
@@ -738,56 +746,90 @@ function tryStartGame() {
 io.on('connection', (socket) => {
   console.log(`[+] Connected: ${socket.id}`);
 
-  socket.on('join_lobby', ({ playerName }) => {
-    if (lobby.phase === 'in_game') {
-      socket.emit('error_msg', { message: 'A game is already in progress. Please wait.' });
-      return;
+  // join_lobby: if no gameCode → create new game; if gameCode provided → join existing
+  socket.on('join_lobby', ({ playerName, gameCode: requestedCode }) => {
+    let code = requestedCode ? requestedCode.toUpperCase().trim() : null;
+
+    if (!code) {
+      // ── Create a new game ──
+      code = generateGameCode();
+      createGame(code);
+      socket.join(code);
+      socketGame.set(socket.id, code);
+      const game = games.get(code);
+      game.lobby.players[socket.id] = {
+        socketId: socket.id,
+        name: playerName || 'Player 1',
+        role: null,
+        ready: false,
+      };
+      socket.emit('lobby_created', { gameCode: code });
+      io.to(code).emit('lobby_update', getLobbyUpdate(game.lobby));
+      console.log(`[LOBBY] Created game ${code} by ${playerName}`);
+    } else {
+      // ── Join existing game ──
+      const game = games.get(code);
+      if (!game) {
+        socket.emit('error_msg', { message: `Game code "${code}" was not found. Check the code and try again.` });
+        return;
+      }
+      if (game.lobby.phase === 'in_game') {
+        socket.emit('error_msg', { message: 'That game has already started. Please wait for it to finish.' });
+        return;
+      }
+      if (Object.keys(game.lobby.players).length >= 2) {
+        socket.emit('error_msg', { message: 'That lobby is full (2/2 players).' });
+        return;
+      }
+      socket.join(code);
+      socketGame.set(socket.id, code);
+      game.lobby.players[socket.id] = {
+        socketId: socket.id,
+        name: playerName || 'Player 2',
+        role: null,
+        ready: false,
+      };
+      io.to(code).emit('lobby_update', getLobbyUpdate(game.lobby));
+      console.log(`[LOBBY] ${playerName} joined game ${code}`);
     }
-    const existing = Object.values(lobby.players);
-    if (existing.length >= 2) {
-      socket.emit('error_msg', { message: 'Lobby is full. Please wait for the current game to finish.' });
-      return;
-    }
-    lobby.players[socket.id] = {
-      socketId: socket.id,
-      name: playerName || `Player ${existing.length + 1}`,
-      role: null,
-      ready: false,
-    };
-    io.emit('lobby_update', getLobbyUpdate());
   });
 
   socket.on('select_role', ({ role }) => {
-    if (!lobby.players[socket.id]) return;
-    const taken = Object.values(lobby.players).some(p => p.role === role && p.socketId !== socket.id);
+    const entry = getGameBySocket(socket.id);
+    if (!entry) return;
+    const { code, game } = entry;
+    if (!game || !game.lobby.players[socket.id]) return;
+    const taken = Object.values(game.lobby.players).some(p => p.role === role && p.socketId !== socket.id);
     if (taken) {
       socket.emit('role_taken', { role });
       return;
     }
-    lobby.players[socket.id].role = role;
-    lobby.players[socket.id].ready = false;
-    io.emit('lobby_update', getLobbyUpdate());
+    game.lobby.players[socket.id].role = role;
+    game.lobby.players[socket.id].ready = false;
+    io.to(code).emit('lobby_update', getLobbyUpdate(game.lobby));
   });
 
   socket.on('start_practice', ({ playerName, playerRole, difficulty }) => {
-    if (lobby.phase === 'in_game') {
-      socket.emit('error_msg', { message: 'A game is already in progress. Please wait.' });
-      return;
-    }
+    const code = generateGameCode();
+    createGame(code);
+    socket.join(code);
+    socketGame.set(socket.id, code);
+    const game = games.get(code);
+
     const aiRole = playerRole === 'hacker' ? 'controller' : 'hacker';
     const aiName = difficulty === 'easy' ? 'CPU (Easy)' : difficulty === 'hard' ? 'CPU (Hard)' : 'CPU (Medium)';
 
-    const hackerSocket  = playerRole === 'hacker' ? socket.id : 'AI';
-    const hackerName    = playerRole === 'hacker' ? playerName : aiName;
+    const hackerSocket     = playerRole === 'hacker' ? socket.id : 'AI';
+    const hackerName       = playerRole === 'hacker' ? playerName : aiName;
     const controllerSocket = playerRole === 'controller' ? socket.id : 'AI';
     const controllerName   = playerRole === 'controller' ? playerName : aiName;
 
-    lobby.phase = 'in_game';
-    gameState = createInitialGameState(hackerSocket, hackerName, controllerSocket, controllerName);
-    gameState.isPractice = true;
-    gameState.ai = { role: aiRole, difficulty, turnTimeout: null };
+    game.lobby.phase = 'in_game';
+    game.gameState = createInitialGameState(hackerSocket, hackerName, controllerSocket, controllerName);
+    game.gameState.isPractice = true;
+    game.gameState.ai = { role: aiRole, difficulty, turnTimeout: null };
 
-    const publicRooms = getPublicRooms(gameState.rooms);
+    const publicRooms = getPublicRooms(game.gameState.rooms);
     socket.emit('game_start', {
       yourRole: playerRole,
       rooms: publicRooms,
@@ -796,55 +838,59 @@ io.on('connection', (socket) => {
       isPractice: true,
       aiRole,
       difficulty,
+      gameCode: code,
     });
 
-    gameState.timerInterval = setInterval(() => {
-      if (!gameState) return;
-      gameState.secondsRemaining--;
-      io.emit('tick', { secondsRemaining: gameState.secondsRemaining });
-      if (gameState.secondsRemaining <= 0) endGame();
+    game.gameState.timerInterval = setInterval(() => {
+      const g = games.get(code);
+      if (!g || !g.gameState) return;
+      g.gameState.secondsRemaining--;
+      io.to(code).emit('tick', { secondsRemaining: g.gameState.secondsRemaining });
+      if (g.gameState.secondsRemaining <= 0) endGame(code);
     }, 1000);
 
-    scheduleAiTurn(difficulty);
-    console.log(`[PRACTICE] ${playerName} (${playerRole}) vs ${aiName} — difficulty: ${difficulty}`);
+    scheduleAiTurn(difficulty, code);
+    console.log(`[PRACTICE] ${playerName} (${playerRole}) vs ${aiName} — difficulty: ${difficulty} — code: ${code}`);
   });
 
   socket.on('set_ready', () => {
-    if (!lobby.players[socket.id]) return;
-    if (!lobby.players[socket.id].role) return;
-    lobby.players[socket.id].ready = true;
-    io.emit('lobby_update', getLobbyUpdate());
-    tryStartGame();
+    const entry = getGameBySocket(socket.id);
+    if (!entry) return;
+    const { code, game } = entry;
+    if (!game || !game.lobby.players[socket.id]) return;
+    if (!game.lobby.players[socket.id].role) return;
+    game.lobby.players[socket.id].ready = true;
+    io.to(code).emit('lobby_update', getLobbyUpdate(game.lobby));
+    tryStartGame(code);
   });
 
   socket.on('enter_room', ({ roomId }) => {
-    if (!gameState) return;
-    const role = gameState.players.hacker.socketId === socket.id ? 'hacker'
-               : gameState.players.controller.socketId === socket.id ? 'controller' : null;
+    const entry = getGameBySocket(socket.id);
+    if (!entry) return;
+    const { code, game } = entry;
+    if (!game || !game.gameState) return;
+    const gs = game.gameState;
+
+    const role = gs.players.hacker.socketId === socket.id ? 'hacker'
+               : gs.players.controller.socketId === socket.id ? 'controller' : null;
     if (!role) return;
-    const room = gameState.rooms[roomId];
+    const room = gs.rooms[roomId];
     if (!room) return;
 
-    // Leave current room if in one
-    const currentRoomId = gameState.players[role].currentRoomId;
-    if (currentRoomId && gameState.rooms[currentRoomId]) {
-      gameState.rooms[currentRoomId].occupant = null;
+    const currentRoomId = gs.players[role].currentRoomId;
+    if (currentRoomId && gs.rooms[currentRoomId]) {
+      gs.rooms[currentRoomId].occupant = null;
     }
 
-    gameState.players[role].currentRoomId = roomId;
+    gs.players[role].currentRoomId = roomId;
     room.occupant = role;
 
-    // Refresh challenge data each entry with an incremented variant so the
-    // controller always sees a different question from the hacker who just left
     if (room.challengeType !== 'usb_drop') {
       room.challengeVariantIndex = (room.challengeVariantIndex || 0) + 1;
       room.challengeData = generateChallengeData(room.challengeType, room.challengeVariantIndex);
     }
 
-    const challengeData = { ...room.challengeData };
-    // Strip server-only answer keys for client
-    const stripped = { ...challengeData };
-
+    const stripped = { ...room.challengeData };
     socket.emit('room_entered', {
       roomId,
       challengeType: room.challengeType,
@@ -853,7 +899,7 @@ io.on('connection', (socket) => {
       usbPlanted: room.usbPlanted,
     });
 
-    io.emit('room_occupancy_update', {
+    io.to(code).emit('room_occupancy_update', {
       roomId,
       occupant: role,
       prevRoomId: currentRoomId,
@@ -861,27 +907,36 @@ io.on('connection', (socket) => {
   });
 
   socket.on('leave_room', () => {
-    if (!gameState) return;
-    const role = gameState.players.hacker.socketId === socket.id ? 'hacker'
-               : gameState.players.controller.socketId === socket.id ? 'controller' : null;
+    const entry = getGameBySocket(socket.id);
+    if (!entry) return;
+    const { code, game } = entry;
+    if (!game || !game.gameState) return;
+    const gs = game.gameState;
+
+    const role = gs.players.hacker.socketId === socket.id ? 'hacker'
+               : gs.players.controller.socketId === socket.id ? 'controller' : null;
     if (!role) return;
-    const currentRoomId = gameState.players[role].currentRoomId;
+    const currentRoomId = gs.players[role].currentRoomId;
     if (!currentRoomId) return;
-    gameState.rooms[currentRoomId].occupant = null;
-    gameState.players[role].currentRoomId = null;
-    io.emit('room_occupancy_update', { roomId: currentRoomId, occupant: null, prevRoomId: null });
+    gs.rooms[currentRoomId].occupant = null;
+    gs.players[role].currentRoomId = null;
+    io.to(code).emit('room_occupancy_update', { roomId: currentRoomId, occupant: null, prevRoomId: null });
     socket.emit('room_left', {});
   });
 
   socket.on('challenge_attempt', ({ roomId, answer }) => {
-    if (!gameState) return;
-    const role = gameState.players.hacker.socketId === socket.id ? 'hacker'
-               : gameState.players.controller.socketId === socket.id ? 'controller' : null;
+    const entry = getGameBySocket(socket.id);
+    if (!entry) return;
+    const { code, game } = entry;
+    if (!game || !game.gameState) return;
+    const gs = game.gameState;
+
+    const role = gs.players.hacker.socketId === socket.id ? 'hacker'
+               : gs.players.controller.socketId === socket.id ? 'controller' : null;
     if (!role) return;
-    const room = gameState.rooms[roomId];
+    const room = gs.rooms[roomId];
     if (!room) return;
 
-    // Check cooldown
     if (room.cooldownUntil && Date.now() < room.cooldownUntil) {
       socket.emit('challenge_result', { success: false, roomId, message: 'Room is in cooldown!', newStatus: room.status });
       return;
@@ -898,16 +953,15 @@ io.on('connection', (socket) => {
         room.status = 'green';
         if (room.challengeType === 'usb_drop') room.usbPlanted = false;
       }
-      // Only set cooldown if status actually changed
       if (prevStatus !== room.status) {
-        room.cooldownUntil = Date.now() + 30000; // 30s cooldown
+        room.cooldownUntil = Date.now() + 30000;
       }
-      gameState.scores = recalcScores(gameState.rooms);
-      io.emit('room_state_update', {
+      gs.scores = recalcScores(gs.rooms);
+      io.to(code).emit('room_state_update', {
         roomId,
         status: room.status,
         usbPlanted: room.usbPlanted,
-        scores: gameState.scores,
+        scores: gs.scores,
       });
     }
 
@@ -921,22 +975,32 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log(`[-] Disconnected: ${socket.id}`);
-    const wasInLobby = !!lobby.players[socket.id];
-    delete lobby.players[socket.id];
+    const code = socketGame.get(socket.id);
+    socketGame.delete(socket.id);
 
-    if (gameState) {
-      const role = gameState.players.hacker.socketId === socket.id ? 'hacker'
-                 : gameState.players.controller.socketId === socket.id ? 'controller' : null;
+    if (!code) return;
+    const game = games.get(code);
+    if (!game) return;
+
+    const wasInLobby = !!game.lobby.players[socket.id];
+    delete game.lobby.players[socket.id];
+
+    if (game.gameState) {
+      const role = game.gameState.players.hacker.socketId === socket.id ? 'hacker'
+                 : game.gameState.players.controller.socketId === socket.id ? 'controller' : null;
       if (role) {
-        if (gameState.ai && gameState.ai.turnTimeout) clearTimeout(gameState.ai.turnTimeout);
-        clearInterval(gameState.timerInterval);
-        if (!gameState.isPractice) io.emit('opponent_disconnected', { role });
-        gameState = null;
-        lobby.phase = 'waiting';
-        lobby.players = {};
+        if (game.gameState.ai && game.gameState.ai.turnTimeout) clearTimeout(game.gameState.ai.turnTimeout);
+        clearInterval(game.gameState.timerInterval);
+        if (!game.gameState.isPractice) io.to(code).emit('opponent_disconnected', { role });
+        games.delete(code);
       }
     } else if (wasInLobby) {
-      io.emit('lobby_update', getLobbyUpdate());
+      if (Object.keys(game.lobby.players).length === 0) {
+        games.delete(code);
+        console.log(`[LOBBY] Game ${code} removed — empty lobby`);
+      } else {
+        io.to(code).emit('lobby_update', getLobbyUpdate(game.lobby));
+      }
     }
   });
 });

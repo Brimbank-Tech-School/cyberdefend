@@ -512,11 +512,11 @@ const ROOM_DEFS = {
       {id:'sd3',type:'desk',x:200,y:360,w:78,h:48,name:'Student Desk',flavor:'A science project on volcanoes. Papier mâché bits everywhere.'},
       {id:'sd4',type:'desk',x:360,y:360,w:78,h:48,name:'Student Desk',flavor:'Completely empty. Whoever sits here is very tidy.'},
       {id:'td',type:'desk',x:590,y:155,w:100,h:60,col:'#8B6914',name:"Teacher\'s Desk",flavor:'Lesson plans and a mug of cold tea.'},
-      {id:'tc',type:'computer',x:590,y:148,w:52,h:38,name:'Classroom Computer',flavor:'A login screen. You do not have access.'},
+      {id:'tc',type:'computer',x:590,y:148,w:52,h:38,name:'Classroom Computer',isChallenge:true},
       {id:'fc',type:'cabinet',x:840,y:210,w:48,h:68,col:'#7a8a8a',name:'Filing Cabinet',flavor:'Locked. Label reads "STUDENT RECORDS — CONFIDENTIAL".'},
       {id:'pr',type:'cabinet',x:840,y:340,w:50,h:40,col:'#cccccc',name:'Printer',flavor:'The paper tray is empty. An error light is flashing.'},
       {id:'pl1',type:'plant',x:100,y:120,name:'Plant',flavor:'A healthy spider plant. Someone has been watering it.'},
-      {id:'nb',type:'noticeboard',x:450,y:95,w:170,h:44,name:'Noticeboard',isChallenge:true},
+      {id:'nb',type:'noticeboard',x:450,y:165,w:170,h:44,name:'Noticeboard',flavor:'Class notices, a timetable, and a reminder about the fire drill.'},
     ]
   },
   computer_lab: {
@@ -683,8 +683,8 @@ const ROOM_DEFS = {
     theme:{ floor:'#D0CCBC', wall:'#6B5A3E', trim:'#5B4A2E', tileW:64 },
     objects:[
       {id:'rd',type:'reception',x:490,y:195,w:220,h:56,name:'Reception Counter',flavor:'The main front desk. A sign says "PLEASE SIGN IN".'},
-      {id:'rc',type:'computer',x:615,y:178,w:52,h:38,name:'Reception Computer',isChallenge:true},
       {id:'si',type:'signin',x:360,y:188,name:'Sign-In Book',flavor:'Today\'s log. A visitor signed in at 7:30am — before school opened.'},
+      {id:'rc',type:'computer',x:780,y:310,w:52,h:38,name:'Reception Computer',isChallenge:true},
       {id:'vc1',type:'desk',x:195,y:390,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:'A leaflet about the school open day is on the seat.',passable:true},
       {id:'vc2',type:'desk',x:450,y:400,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:"A visitor's lanyard has been left behind.",passable:true},
       {id:'vc3',type:'desk',x:705,y:390,w:34,h:34,col:'#5a5a6a',name:'Visitor Chair',flavor:'A school achievements brochure is on this one.',passable:true},

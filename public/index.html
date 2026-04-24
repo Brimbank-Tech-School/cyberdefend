@@ -17,6 +17,7 @@
     <div class="lobby-header">
       <h1 class="game-title">CYBER<span class="title-accent">DEFEND</span></h1>
       <p class="game-subtitle">Hacker vs Cyber Controller · School Challenge Game</p>
+      <button class="btn-howtoplay" onclick="showHowToPlay()">❓ HOW TO PLAY</button>
     </div>
 
     <!-- Name Input -->
@@ -34,7 +35,18 @@
 
       <!-- PvP section -->
       <div id="pvp-section">
-        <button id="join-btn" class="btn btn-primary" style="width:100%">JOIN LOBBY</button>
+        <div class="pvp-create-join">
+          <button id="create-btn" class="btn btn-primary" style="flex:1">✚ CREATE GAME</button>
+          <div class="pvp-or">OR</div>
+          <div class="pvp-join-row">
+            <input type="text" id="game-code-input" placeholder="Game code (e.g. AB3X)" maxlength="4" autocomplete="off" style="text-transform:uppercase" />
+            <button id="join-btn" class="btn btn-secondary">JOIN</button>
+          </div>
+        </div>
+        <div id="game-code-display" class="game-code-display hidden">
+          <div class="code-label">YOUR GAME CODE — share with your partner:</div>
+          <div id="game-code-value" class="code-value"></div>
+        </div>
       </div>
 
       <!-- Practice section -->
@@ -75,6 +87,9 @@
     <!-- Lobby Players -->
     <div id="lobby-players-section" class="lobby-card hidden">
       <h2>LOBBY</h2>
+      <div id="lobby-code-banner" class="lobby-code-banner hidden">
+        Game Code: <span id="lobby-code-text" class="lobby-code-highlight"></span>
+      </div>
       <div class="player-slots">
         <div class="player-slot" id="slot-0">
           <span class="slot-icon">👤</span>
@@ -184,6 +199,56 @@
         <button id="leave-room-btn" class="btn btn-secondary" onclick="leaveRoom()">← Leave Room</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ HOW TO PLAY OVERLAY ═════════════════ -->
+<div id="howtoplay-overlay" class="overlay hidden">
+  <div class="overlay-card howtoplay-card">
+    <h1 class="howtoplay-title">⚡ HOW TO PLAY</h1>
+
+    <div class="howtoplay-section">
+      <h2>🎯 The Goal</h2>
+      <p>Two players compete across 16 school rooms. The <span class="role-hacker">Hacker</span> tries to compromise as many rooms as possible, while the <span class="role-controller">Cyber Controller</span> defends and secures them. The player who controls the most rooms when the <strong>10-minute timer</strong> runs out wins!</p>
+    </div>
+
+    <div class="howtoplay-roles">
+      <div class="howtoplay-role hacker-side">
+        <div class="role-emoji">💀</div>
+        <div class="role-title-big">HACKER</div>
+        <ul>
+          <li>Pick weak passwords to crack into rooms</li>
+          <li>Identify phishing email lures to send</li>
+          <li>Find firewall vulnerabilities to exploit</li>
+          <li>Choose the social engineering move that works</li>
+        </ul>
+        <div class="role-goal">Turn rooms <span style="color:#ff2244;font-weight:bold">RED</span> 🔴</div>
+      </div>
+      <div class="howtoplay-vs">VS</div>
+      <div class="howtoplay-role controller-side">
+        <div class="role-emoji">🛡️</div>
+        <div class="role-title-big">CYBER CONTROLLER</div>
+        <ul>
+          <li>Spot the strongest, safest password</li>
+          <li>Flag ALL suspicious phishing elements</li>
+          <li>Block every dangerous firewall port</li>
+          <li>Report the right threat to stay safe</li>
+        </ul>
+        <div class="role-goal">Turn rooms <span style="color:#00ff88;font-weight:bold">GREEN</span> 🟢</div>
+      </div>
+    </div>
+
+    <div class="howtoplay-section">
+      <h2>🕹️ Controls</h2>
+      <p>In each room, walk your character using <strong>Arrow keys</strong> or <strong>WASD</strong>. Look for the flashing <span style="color:#ff2244;font-weight:bold">❗</span> beacon — that marks the challenge point. Walk up to it and press <strong>[E]</strong> or click it to start the challenge. Press <strong>[ESC]</strong> or click <em>Leave Room</em> to exit.</p>
+    </div>
+
+    <div class="howtoplay-section">
+      <h2>⏱️ Timer &amp; Scoring</h2>
+      <p>You have <strong>10 minutes</strong>. Each room you control at the end counts as one point. Rooms switch colour immediately when a challenge is won — but there's a <strong>30-second cooldown</strong> before that room can be contested again.</p>
+    </div>
+
+    <button class="btn btn-primary howtoplay-btn" onclick="dismissHowToPlay()">⚔️ LET'S PLAY!</button>
   </div>
 </div>
 

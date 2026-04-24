@@ -10,6 +10,7 @@ const socket = io();
 const client = {
   myRole: null,
   myName: null,
+  gameCode: null,
   rooms: {},
   scores: { hacker: 0, controller: 0 },
   secondsRemaining: 600,
@@ -79,20 +80,51 @@ function startPractice() {
   });
 }
 
-$('join-btn').addEventListener('click', () => {
+// ── Create Game (no code = server will create one) ────────
+$('create-btn').addEventListener('click', () => {
   const name = $('player-name-input').value.trim();
-  if (!name) {
-    showLobbyError('Please enter your name.');
-    return;
-  }
+  if (!name) { showLobbyError('Please enter your name first.'); return; }
   client.myName = name;
   socket.emit('join_lobby', { playerName: name });
+});
+
+// ── Join existing game by code ─────────────────────────────
+$('join-btn').addEventListener('click', () => {
+  const name = $('player-name-input').value.trim();
+  const code = $('game-code-input').value.trim().toUpperCase();
+  if (!name) { showLobbyError('Please enter your name.'); return; }
+  if (!code || code.length !== 4) { showLobbyError('Please enter a 4-character game code.'); return; }
+  client.myName = name;
+  socket.emit('join_lobby', { playerName: name, gameCode: code });
+});
+
+// Allow enter key in code input to trigger join
+$('game-code-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') $('join-btn').click();
 });
 
 $('player-name-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     if (practice.tab === 'practice') startPractice();
-    else $('join-btn').click();
+    // Name field enter does nothing for PvP — players choose create or join explicitly
+  }
+});
+
+// ── How To Play overlay ────────────────────────────────────
+function showHowToPlay() {
+  showEl('howtoplay-overlay');
+}
+function dismissHowToPlay() {
+  hideEl('howtoplay-overlay');
+}
+
+// ── Received game code from server (created new lobby) ─────
+socket.on('lobby_created', ({ gameCode }) => {
+  client.gameCode = gameCode;
+  const display = $('game-code-display');
+  if (display) {
+    $('game-code-value').textContent = gameCode;
+    display.classList.remove('hidden');
   }
 });
 
@@ -114,6 +146,15 @@ function setReady() {
 socket.on('lobby_update', (data) => {
   hideEl('name-section');
   showEl('lobby-players-section');
+  // Show game code banner if we have a code
+  if (client.gameCode) {
+    const banner = $('lobby-code-banner');
+    const codeText = $('lobby-code-text');
+    if (banner && codeText) {
+      codeText.textContent = client.gameCode;
+      banner.classList.remove('hidden');
+    }
+  }
 
   // Update slots
   data.players.forEach((p, i) => {
@@ -217,10 +258,12 @@ socket.on('game_start', (data) => {
   client.inRoom = false;
   client.isPractice = data.isPractice || false;
   client.aiRole = data.aiRole || null;
+  if (data.gameCode) client.gameCode = data.gameCode;
 
   showView('game');
   setupHUD();
   buildMap();
+  showHowToPlay(); // Show instructions before play begins
 
   if (client.isPractice) {
     const feed = $('ai-feed');
